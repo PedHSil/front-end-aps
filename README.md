@@ -7,3 +7,6 @@ npm install
 
 npm run dev
 
+# add da routes ou rotas
+npm install react-router-dom
+--mexer no main.jsx e envolver o <App /> com o Browser para as routes funcionarem
