@@ -38,5 +38,9 @@
 }
 
 .read-the-docs {
-  color: #888;
+  color: linear-gradient(
+    45deg,
+    rgb(16, 137, 211) 0%,
+    rgb(18, 177, 209) 100%
+  )
 }
