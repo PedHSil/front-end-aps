@@ -1,0 +1,46 @@
+.sidebar {
+    position: fixed;
+    width: 250px;
+    height: 100vh;
+    background-color: #005F8C; /* Cor principal da UNIP */
+    color: white;
+    padding: 2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sidebar ul {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+  }
+  
+  .sidebar li {
+    margin-bottom: 20px;
+  }
+  
+  .link {
+    display: flex;
+    align-items: center;
+    color: white;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 10px;
+    transition: all 0.3s ease;
+  }
+  
+  .link:hover {
+    background-color: #003d59; /* Um tom mais escuro para hover */
+    border-radius: 5px;
+    padding-left: 15px;
+  }
+  
+  .link svg {
+    margin-right: 10px;
+    font-size: 1.2rem;
+  }
+  

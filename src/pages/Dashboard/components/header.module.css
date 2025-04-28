@@ -1,0 +1,47 @@
+.header {
+    background-color: #005F8C; /* Cor principal da UNIP */
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .title {
+    font-size: 1.75rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+  }
+  
+  .userSection {
+    display: flex;
+    align-items: center;
+  }
+  
+  .welcomeText {
+    margin-right: 20px;
+    font-size: 1rem;
+  }
+  
+  .logoutButton {
+    background-color: #e74c3c; /* Cor vermelha para destaque */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .logoutButton:hover {
+    background-color: #c0392b; /* Cor mais escura para o hover */
+  }
+  
+  .logoutButton svg {
+    margin-right: 8px;
+  }
+  
