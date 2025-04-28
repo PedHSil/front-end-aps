@@ -1,0 +1,80 @@
+:root {
+  --unip-blue: #005bac;
+  --unip-light-blue: #64a8e2;
+  --unip-white: #ffffff;
+  --unip-gray: #f2f2f2;
+  --unip-dark-gray: #333333;
+  --font-family: Arial, sans-serif; /* Definindo a fonte padrão */
+}
+
+.loginContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--unip-gray);
+  padding: 2rem;
+}
+
+.loginForm {
+  background: var(--unip-white);
+  padding: 3rem;
+  border-radius: 1.2rem;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 450px;
+}
+
+.loginTitle {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: var(--unip-blue);
+  letter-spacing: 1px;
+  font-family: var(--font-family); /* Garantindo que o título use Arial */
+}
+
+label {
+  font-family: var(--font-family); /* Garantindo que os labels usem Arial */
+  font-size: 1rem;
+  color: var(--unip-dark-gray);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+input[type="email"], input[type="password"] {
+  border: 1px solid #ddd;
+  border-radius: 0.75rem;
+  padding: 1rem 0rem;
+  font-size: 1.1rem;
+  margin-bottom: 1.8rem;
+  transition: border-color 0.3s ease-in-out;
+  width: 100%;
+  font-family: var(--font-family); /* Garantindo que os inputs usem Arial */
+}
+
+input[type="email"]:focus, input[type="password"]:focus {
+  outline: none;
+  border-color: var(--unip-blue);
+}
+
+button {
+  background-color: var(--unip-blue);
+  color: var(--unip-white);
+  padding: 1rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 0.75rem;
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: var(--unip-light-blue);
+}
+
+button:focus {
+  outline: none;
+  box-shadow: 0 0 5px 2px rgba(0, 91, 172, 0.3);
+}
