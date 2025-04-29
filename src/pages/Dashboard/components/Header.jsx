@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaUserCircle, FaCog, FaPowerOff, FaAngleDown } from 'react-icons/fa';
+import { FaUserCircle, FaCog, FaPowerOff, FaAngleDown, FaBars } from 'react-icons/fa';
 import styles from './header.module.css';
+import Unip from '../../../assets/logo-unip-vermelha-1024.png';
 
-export default function Header() {
+export default function Header({ toggleSidebar }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -26,8 +27,10 @@ export default function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.logoContainer}>
-        <div className={styles.logo}>UNIP</div>
-        <h1 className={styles.title}>Dashboard</h1>
+        <button className={styles.menuToggle} onClick={toggleSidebar}>
+          <FaBars />
+        </button>
+        <div className={styles.logo}><img src={Unip} alt="Logo UNIP" /></div>
       </div>
       
       <div className={styles.userSection} ref={dropdownRef}>

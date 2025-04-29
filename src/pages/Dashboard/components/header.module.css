@@ -1,106 +1,131 @@
 .header {
-    background-color: #fff;
-    color: #263238;
-    padding: 0.8rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    border-bottom: 1px solid #f0f0f0;
-    height: 64px;
-  }
-  
-  .logoContainer {
-    display: flex;
-    align-items: center;
-  }
-  
-  .logo {
-    font-weight: 800;
-    font-size: 1.4rem;
-    color: #005F8C;
-    margin-right: 1rem;
-    letter-spacing: 0.5px;
-  }
-  
-  .title {
-    font-size: 1.2rem;
-    font-weight: 500;
-    color: #455a64;
-  }
-  
-  .userSection {
-    position: relative;
-  }
-  
-  .userButton {
-    display: flex;
-    align-items: center;
-    background: none;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    color: #455a64;
-    transition: background-color 0.2s;
-  }
-  
-  .userButton:hover {
-    background-color: #f5f5f5;
-  }
-  
-  .userIcon {
-    font-size: 1.4rem;
-    margin-right: 8px;
-    color: #005F8C;
-  }
-  
-  .userName {
-    font-size: 0.9rem;
-    font-weight: 500;
-    margin-right: 8px;
-  }
-  
-  .dropdownIcon {
-    font-size: 0.8rem;
-    transition: transform 0.2s ease;
-  }
-  
-  .rotated {
-    transform: rotate(180deg);
-  }
-  
-  .dropdown {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    width: 180px;
-    background-color: white;
-    border-radius: 4px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    z-index: 10;
-    margin-top: 5px;
-  }
-  
-  .dropdownItem {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    color: #455a64;
-    text-decoration: none;
-    transition: background-color 0.2s;
-  }
-  
-  .dropdownItem:hover {
-    background-color: #f5f5f5;
-  }
-  
-  .dropdownItem svg {
-    margin-right: 10px;
-    font-size: 1rem;
-  }
-  
-  .dropdownItem:last-child {
-    color: #e53935;
-  }
+  background-color: #023D71;
+  color: #263238;
+  padding: 0 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #033D71;
+  height: 64px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+}
+
+.menuToggle {
+  background: none;
+  border: none;
+  color: #FFF100;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.menuToggle:hover {
+  background-color: #f0f0f0;
+  color: #005F8C;
+}
+
+.logo img{
+  width: 160px;
+  height: auto;
+}
+
+.title {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #455a64;
+}
+
+.userSection {
+  position: relative;
+}
+
+.userButton {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #455a64;
+  transition: background-color 0.2s;
+}
+
+.userButton:hover {
+  background-color: #075EBD;
+}
+
+.userIcon {
+  font-size: 1.4rem;
+  margin-right: 8px;
+  color: #fff;
+}
+
+.userName {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-right: 8px;
+  color: #fff;
+}
+
+.dropdownIcon {
+  font-size: 0.8rem;
+  transition: transform 0.2s ease;
+  color: #fff;
+}
+
+.rotated {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 180px;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  z-index: 10;
+  margin-top: 5px;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  color: #455a64;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.dropdownItem:hover {
+  background-color: #f5f5f5;
+}
+
+.dropdownItem svg {
+  margin-right: 10px;
+  font-size: 1rem;
+}
+
+.dropdownItem:last-child {
+  color: #e53935;
+}
