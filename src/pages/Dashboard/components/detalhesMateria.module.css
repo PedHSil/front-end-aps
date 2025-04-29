@@ -1,0 +1,66 @@
+.container {
+    padding: 1rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .voltar {
+    background-color: transparent;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+  }
+  
+  .tabela {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  
+  .tabela th, .tabela td {
+    border: 1px solid #ccc;
+    padding: 0.5rem;
+    text-align: center;
+  }
+  
+  .tabela th {
+    background-color: #f0f0f0;
+  }
+  
+  input[type="number"] {
+    width: 60px;
+    padding: 0.2rem;
+    text-align: center;
+  }
+  
+  button {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.9rem;
+  }
+  
+  button:hover {
+    background-color: #d32f2f;
+  }
+  
+  .deletar {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.9rem;
+  }
+  
+  .deletar:hover {
+    background-color: #d32f2f;
+  }
+  
