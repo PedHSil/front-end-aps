@@ -4,7 +4,7 @@
   --unip-white: #ffffff;
   --unip-gray: #f2f2f2;
   --unip-dark-gray: #333333;
-  --font-family: Arial, sans-serif; /* Definindo a fonte padrão */
+  --font-family: Arial, sans-serif;
 }
 
 .loginContainer {
@@ -32,18 +32,18 @@
   text-align: center;
   color: var(--unip-blue);
   letter-spacing: 1px;
-  font-family: var(--font-family); /* Garantindo que o título use Arial */
+  font-family: var(--font-family);
 }
 
 label {
-  font-family: var(--font-family); /* Garantindo que os labels usem Arial */
+  font-family: var(--font-family);
   font-size: 1rem;
   color: var(--unip-dark-gray);
   display: block;
   margin-bottom: 0.5rem;
 }
 
-input[type="email"], input[type="password"] {
+input[type="text"], input[type="password"] {
   border: 1px solid #ddd;
   border-radius: 0.75rem;
   padding: 1rem 0rem;
@@ -51,10 +51,10 @@ input[type="email"], input[type="password"] {
   margin-bottom: 1.8rem;
   transition: border-color 0.3s ease-in-out;
   width: 100%;
-  font-family: var(--font-family); /* Garantindo que os inputs usem Arial */
+  font-family: var(--font-family);
 }
 
-input[type="email"]:focus, input[type="password"]:focus {
+input[type="text"]:focus, input[type="password"]:focus {
   outline: none;
   border-color: var(--unip-blue);
 }
@@ -77,4 +77,8 @@ button:hover {
 button:focus {
   outline: none;
   box-shadow: 0 0 5px 2px rgba(0, 91, 172, 0.3);
+}
+
+.text-red-500 {
+  color: #f44336; /* Cor para mensagens de erro */
 }
