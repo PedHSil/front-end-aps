@@ -1,39 +1,86 @@
-import React, { useState } from 'react';
-import { mockAlunos, mockMateriasPorAluno, mockNotasPorMateria } from "../mockData";
+import React, { useState, useEffect } from 'react';
 import TabelaNotas from './TabelaNotas';
 import styles from './content.module.css';
 
 export default function Content() {
+  const [alunos, setAlunos] = useState([]);
   const [alunoSelecionado, setAlunoSelecionado] = useState(null);
+  const [materias, setMaterias] = useState([]);
   const [materiaSelecionada, setMateriaSelecionada] = useState(null);
+  const [notas, setNotas] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const idProfessor = 3; // Altere para 3 ou 4, conforme necessário
+
+  // Buscar alunos do professor
+  useEffect(() => {
+    setLoading(true);
+    fetch(`http://localhost:8080/api/professores/${idProfessor}/alunos`)
+      .then(res => res.json())
+      .then(data => setAlunos(data))
+      .catch(err => console.error('Erro ao buscar alunos:', err))
+      .finally(() => setLoading(false));
+  }, [idProfessor]);
+
+  // Buscar matérias com base no RA do aluno
+  useEffect(() => {
+    if (!alunoSelecionado) return;
+
+    setLoading(true);
+    fetch(`http://localhost:8080/api/alunos/${alunoSelecionado.ra}/materias`)
+      .then(res => res.json())
+      .then(data => setMaterias(data))
+      .catch(err => console.error('Erro ao buscar matérias:', err))
+      .finally(() => setLoading(false));
+  }, [alunoSelecionado]);
+
+  // Buscar notas com base no ID do aluno e ID da matéria
+  useEffect(() => {
+    if (!alunoSelecionado || !materiaSelecionada) return;
+
+    setLoading(true);
+    fetch(`http://localhost:8080/api/alunos/${alunoSelecionado.id}/materias/${materiaSelecionada.id}/notas`)
+      .then(res => res.json())
+      .then(data => setNotas(data))
+      .catch(err => console.error('Erro ao buscar notas:', err))
+      .finally(() => setLoading(false));
+  }, [materiaSelecionada, alunoSelecionado]);
 
   const handleSelecionarAluno = (event) => {
-    const alunoId = event.target.value;
-    const aluno = mockAlunos.find(aluno => aluno.id === alunoId);
+    const alunoId = parseInt(event.target.value);
+    const aluno = alunos.find(a => a.id === alunoId);
     setAlunoSelecionado(aluno);
-    setMateriaSelecionada(null);  // Limpar a seleção de matéria ao selecionar aluno
+    setMateriaSelecionada(null);
+    setNotas([]);
   };
 
   const handleSelecionarMateria = (event) => {
-    const materiaId = event.target.value;
-    const materia = mockMateriasPorAluno[alunoSelecionado.id].find(materia => materia.id === materiaId);
-    setMateriaSelecionada(materia);  // Seleciona a matéria desejada sem afetar o aluno
+    const materiaId = parseInt(event.target.value);
+    const materia = materias.find(m => m.id === materiaId);
+    setMateriaSelecionada(materia);
   };
 
-  const handleVoltar = () => {
-    setMateriaSelecionada(null);  // Volta para a seleção de matéria
+  const handleVoltarParaMaterias = () => {
+    setMateriaSelecionada(null);
+    setNotas([]);
   };
 
-  const materias = alunoSelecionado ? mockMateriasPorAluno[alunoSelecionado.id] : [];
+  const handleVoltarParaAlunos = () => {
+    setAlunoSelecionado(null);
+    setMateriaSelecionada(null);
+    setNotas([]);
+  };
 
   return (
     <main className={styles.container}>
+      {loading && <p>Carregando...</p>}
+
       {!alunoSelecionado ? (
         <>
           <h2>Selecione um Aluno</h2>
           <select className={styles.select} onChange={handleSelecionarAluno} defaultValue="">
             <option value="" disabled>Escolha um aluno...</option>
-            {mockAlunos.map((aluno) => (
+            {alunos.map((aluno) => (
               <option key={aluno.id} value={aluno.id}>
                 {aluno.nome}
               </option>
@@ -51,15 +98,15 @@ export default function Content() {
               </option>
             ))}
           </select>
-          <button className={styles.voltarButton} onClick={() => setAlunoSelecionado(null)}>← Voltar</button>
+          <button className={styles.voltarButton} onClick={handleVoltarParaAlunos}>← Voltar</button>
         </>
       ) : (
         <>
           <TabelaNotas 
-            aluno={alunoSelecionado} 
-            materia={materiaSelecionada} 
-            notas={mockNotasPorMateria(alunoSelecionado.id, materiaSelecionada.nome)} 
-            onVoltar={handleVoltar} 
+            aluno={alunoSelecionado}
+            materia={materiaSelecionada}
+            notas={notas}
+            onVoltar={handleVoltarParaMaterias}
           />
         </>
       )}
