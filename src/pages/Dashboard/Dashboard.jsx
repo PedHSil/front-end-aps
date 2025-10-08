@@ -23,9 +23,9 @@ export default function Dashboard() {
       />
       <div className={`${styles.mainContent} ${sidebarCollapsed ? styles.expanded : ''}`}>
         <Header toggleSidebar={toggleSidebar} />
-        <div className={styles.pageContent}>
-          <Content /> {/* Aqui é onde você renderiza o CRUD de notas por aluno e matéria */}
-        </div>
+        {/*<div className={styles.pageContent}>
+          <Content />  Aqui é onde você renderiza o CRUD de notas por aluno e matéria 
+        </div>*/}
       </div>
     </div>
   );
