@@ -1,0 +1,6 @@
+/* src/components/DataTable/DataTable.module.css */
+.table { width:100%; border-collapse: collapse; }
+.table th, .table td { border: 1px solid #ddd; padding: 8px; }
+.table th { background: #f5f5f5; text-align: left; }
+.btn { margin-right:6px; padding:4px 8px; cursor:pointer; }
+.btnDanger { padding:4px 8px; background:#e74c3c; color:white; border:none; cursor:pointer; }

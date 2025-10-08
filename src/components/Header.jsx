@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaUserCircle, FaCog, FaPowerOff, FaAngleDown, FaBars } from 'react-icons/fa';
 import styles from './header.module.css';
-import Unip from '../../../assets/logo-unip-vermelha-1024.png';
+import Unip from '../assets/logo-unip-vermelha-1024.png';
 
 export default function Header({ toggleSidebar }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);

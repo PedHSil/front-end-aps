@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
+import Sidebar from '../../components/Sidebar';
+import Header from '../../components/Header';
 import Content from './components/Content'; // ← este sim é o certo
 import styles from './dashboard.module.css';
 

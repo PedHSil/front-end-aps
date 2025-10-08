@@ -38,9 +38,9 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
           {!isCollapsed && <span>Início</span>}
         </Link>
         
-        <Link to="/dashboard/profile" className={styles.navItem}>
+        <Link to="/pacientes" className={styles.navItem}>
           <FaUser className={styles.navIcon} />
-          {!isCollapsed && <span>Perfil</span>}
+          {!isCollapsed && <span>Pacientes</span>}
         </Link>
 
         <Link to="/dashboard/courses" className={styles.navItem}>
