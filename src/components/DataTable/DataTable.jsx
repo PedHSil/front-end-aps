@@ -7,25 +7,43 @@ export default function DataTable({ columns, data = [], onEdit, onDelete, onView
     <table className={styles.table}>
       <thead>
         <tr>
-          {columns.map(col => <th key={col.key}>{col.title}</th>)}
+          {columns.map(col => (
+            <th key={col.key}>{col.title}</th>
+          ))}
           <th>Ações</th>
         </tr>
       </thead>
       <tbody>
         {data.length === 0 && (
           <tr>
-            <td colSpan={columns.length + 1} style={{ textAlign: "center" }}>Nenhum registro encontrado</td>
+            <td colSpan={columns.length + 1} style={{ textAlign: "center" }}>
+              Nenhum registro encontrado
+            </td>
           </tr>
         )}
         {data.map(row => (
           <tr key={row.id}>
             {columns.map(col => (
-              <td key={col.key}>{col.render ? col.render(row) : row[col.key]}</td>
+              <td key={col.key}>
+                {col.render ? col.render(row) : row[col.key]}
+              </td>
             ))}
             <td>
-              <button onClick={() => onView?.(row)} className={styles.btn}>Ver</button>
-              <button onClick={() => onEdit?.(row)} className={styles.btn}>Editar</button>
-              <button onClick={() => onDelete?.(row)} className={styles.btnDanger}>Excluir</button>
+              {onView && (
+                <button onClick={() => onView(row)} className={styles.btn}>
+                  Ver
+                </button>
+              )}
+              {onEdit && (
+                <button onClick={() => onEdit(row)} className={styles.btn}>
+                  Editar
+                </button>
+              )}
+              {onDelete && (
+                <button onClick={() => onDelete(row)} className={styles.btnDanger}>
+                  Excluir
+                </button>
+              )}
             </td>
           </tr>
         ))}
