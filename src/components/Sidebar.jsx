@@ -48,14 +48,19 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
           {!isCollapsed && <span>Medicos</span>}
         </Link>
         
-        <Link to="/dashboard/schedule" className={styles.navItem}>
+        <Link to="/consultas" className={styles.navItem}>
           <FaCalendarAlt className={styles.navIcon} />
-          {!isCollapsed && <span>Agenda</span>}
+          {!isCollapsed && <span>Consultas</span>}
         </Link>
         
-        <Link to="/dashboard/materials" className={styles.navItem}>
+        <Link to="/prontuarios" className={styles.navItem}>
           <FaBook className={styles.navIcon} />
-          {!isCollapsed && <span>Materiais</span>}
+          {!isCollapsed && <span>Prontuarios</span>}
+        </Link>
+
+        <Link to="/especialidades" className={styles.navItem}>
+          <FaBook className={styles.navIcon} />
+          {!isCollapsed && <span>Especialidades</span>}
         </Link>
       </nav>
       

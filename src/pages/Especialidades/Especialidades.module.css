@@ -1,0 +1,41 @@
+.appContainer {
+  display: flex;
+  min-height: 100vh;
+  background: #f6f8fb;
+}
+
+.mainContent {
+  flex: 1;
+  transition: margin-left 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.expanded {
+  /* ajuste se necessário quando a sidebar estiver colapsada */
+}
+
+.pageContent {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.card {
+  border: 1px solid #e6e9ee;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fff;
+}

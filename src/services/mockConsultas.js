@@ -1,6 +1,6 @@
 // src/services/mockConsultas.js
 
-export const consultas = [
+export let consultas = [
   {
     id_consulta: 1,
     id_paciente: 1,
@@ -38,3 +38,26 @@ export const consultas = [
     status: "Agendada"
   }
 ];
+
+// Retorna todas as consultas
+export function getConsultas() {
+  return [...consultas]; // retorna uma cópia para evitar alterações diretas
+}
+
+// Deleta uma consulta pelo id_consulta
+export function deleteConsulta(id) {
+  consultas = consultas.filter(c => c.id_consulta !== id);
+}
+
+// Opcional: adicionar nova consulta
+export function addConsulta(novaConsulta) {
+  const nextId = consultas.length ? Math.max(...consultas.map(c => c.id_consulta)) + 1 : 1;
+  consultas.push({ id_consulta: nextId, ...novaConsulta });
+}
+
+// Opcional: atualizar consulta existente
+export function updateConsulta(updatedConsulta) {
+  consultas = consultas.map(c =>
+    c.id_consulta === updatedConsulta.id_consulta ? updatedConsulta : c
+  );
+}
