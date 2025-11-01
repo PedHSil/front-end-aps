@@ -1,39 +1,60 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { criarEspecialidade, atualizarEspecialidade } from "@/services/especialidades";
+import styles from "./Especialidades.module.css";
 
-export default function EspecialidadeForm({ initialData = null, onSave, onCancel }) {
-  const [form, setForm] = useState(() => initialData ? { ...initialData } : {
-    nome: "",
-    descricao: ""
-  });
+export default function EspecialidadeForm({ especialidadeToEdit, onClose }) {
+  const [nome, setNome] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [error, setError] = useState("");
 
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-  }
+  useEffect(() => {
+    if (especialidadeToEdit?.id) {
+      setNome(especialidadeToEdit.nome || "");
+      setDescricao(especialidadeToEdit.descricao || "");
+    }
+  }, [especialidadeToEdit]);
 
-  function submit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (!form.nome) { alert("Nome é obrigatório"); return; }
-    onSave(form);
+    if (!nome.trim()) return setError("Nome é obrigatório");
+
+    try {
+      if (especialidadeToEdit?.id) {
+        await atualizarEspecialidade(especialidadeToEdit.id, { nome, descricao });
+      } else {
+        await criarEspecialidade({ nome, descricao });
+      }
+      onClose();
+    } catch (err) {
+      setError("Erro ao salvar especialidade");
+      console.error(err);
+    }
   }
 
   return (
-    <form onSubmit={submit} style={{ border: "1px solid #ddd", padding: 12, borderRadius: 6 }}>
-      <div style={{ marginBottom: 8 }}>
-        <label>Nome<br />
-          <input name="nome" value={form.nome} onChange={handleChange} />
-        </label>
-      </div>
-      <div style={{ marginBottom: 8 }}>
-        <label>Descrição<br />
-          <textarea name="descricao" value={form.descricao} onChange={handleChange} rows={3} />
-        </label>
-      </div>
+    <div className={styles.overlay}>
+      <div className={styles.modal}>
+        <h3>{especialidadeToEdit?.id ? "Editar Especialidade" : "Nova Especialidade"}</h3>
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <button type="submit">Salvar</button>
-        <button type="button" onClick={onCancel}>Cancelar</button>
+        {error && <div className={styles.error}>{error}</div>}
+
+        <form className={styles.form} onSubmit={handleSubmit}>
+          <label>Nome</label>
+          <input value={nome} onChange={e => setNome(e.target.value)} />
+
+          <label>Descrição</label>
+          <textarea value={descricao} onChange={e => setDescricao(e.target.value)} />
+
+          <div className={styles.actions}>
+            <button type="submit" className={styles.save}>
+              Salvar
+            </button>
+            <button type="button" className={styles.cancel} onClick={onClose}>
+              Cancelar
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   );
 }
