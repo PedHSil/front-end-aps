@@ -13,3 +13,7 @@ If you are developing a production application, we recommend using TypeScript wi
 
 # Informação do programa
 npm install react-icons
+
+# dependências 
+npm install @mui/material @mui/x-data-grid @emotion/react @emotion/styled
+npm install @mui/icons-material
