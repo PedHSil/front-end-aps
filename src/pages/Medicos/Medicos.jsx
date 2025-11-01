@@ -1,108 +1,134 @@
 // src/pages/Medicos/Medicos.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { getMedicos, deleteMedico } from "@/services/medicos";
+import MedicoForm from "./MedicoForm";
+import MedicoView from "./MedicoView";
+import styles from "./Medicos.module.css";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
-import DataTable from "@/components/DataTable/DataTable";
-import MedicoForm from "./MedicoForm";
-import MedicoView from "./medicoView";
-import { getMedicos, deleteMedico } from "@/services/mockMedicos";
-import styles from "../Dashboard/dashboard.module.css";
+
+// Material UI
+import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
+import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 export default function Medicos() {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(null); // objeto do médico sendo editado OR {} para novo
+  const [viewing, setViewing] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [medicos, setMedicos] = useState([]);
-  const [selectedMedico, setSelectedMedico] = useState(null);
-  const [isAdding, setIsAdding] = useState(false);
-  const [isViewing, setIsViewing] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
 
-  useEffect(() => {
-    setMedicos(getMedicos());
+  const toggleSidebar = useCallback(() => setSidebarCollapsed(prev => !prev), []);
+  const setSidebarState = useCallback(state => setSidebarCollapsed(state), []);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const list = await getMedicos();
+      // garante que cada row tem `id` para o DataGrid
+      const rows = (list || []).map((r) => ({ id: r.id ?? r.id_medico, ...r }));
+      setData(rows);
+    } catch (err) {
+      console.error(err);
+      alert("Falha ao carregar médicos: " + (err.message || err));
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const toggleSidebar = useCallback(() => {
-    setSidebarCollapsed((prev) => !prev);
-  }, []);
+  useEffect(() => { load(); }, [load]);
 
-  const setSidebarState = useCallback((state) => {
-    setSidebarCollapsed(state);
-  }, []);
+  async function handleDelete(row) {
+    if (!window.confirm(`Deseja realmente excluir o médico ${row.nome}?`)) return;
+    try {
+      await deleteMedico(row.id);
+      alert(`Médico ${row.nome} excluído com sucesso!`);
+      await load();
+    } catch (err) {
+      alert("Erro ao excluir: " + (err.message || err));
+    }
+  }
 
-  const handleDelete = (id) => {
-    deleteMedico(id);
-    setMedicos(getMedicos());
-  };
-
-  const handleAdd = () => {
-    setIsAdding(true);
-  };
-
-  const handleView = (medico) => {
-    setSelectedMedico(medico);
-    setIsViewing(true);
-  };
-
-  const handleEdit = (medico) => {
-    setSelectedMedico(medico);
-    setIsEditing(true);
-  };
-
-  const handleFormClose = () => {
-    setIsAdding(false);
-    setIsEditing(false);
-    setMedicos(getMedicos());
-  };
+  const columns = [
+    { field: "nome", headerName: "Nome", flex: 1 },
+    { field: "crm", headerName: "CRM", width: 150 },
+    { field: "especialidadeNome", headerName: "Especialidade", flex: 1 },
+    { field: "telefone", headerName: "Telefone", width: 150 },
+    {
+      field: "actions",
+      type: "actions",
+      headerName: "Ações",
+      width: 120,
+      getActions: (params) => [
+        <GridActionsCellItem
+          icon={<VisibilityIcon />}
+          label="Visualizar"
+          onClick={() => setViewing(params.row)}
+        />,
+        <GridActionsCellItem
+          icon={<EditIcon />}
+          label="Editar"
+          onClick={() => setEditing(params.row)}
+        />,
+        <GridActionsCellItem
+          icon={<DeleteIcon />}
+          label="Excluir"
+          onClick={() => handleDelete(params.row)}
+          showInMenu
+        />,
+      ],
+    },
+  ];
 
   return (
     <div className={styles.appContainer}>
       <Sidebar isCollapsed={sidebarCollapsed} setIsCollapsed={setSidebarState} />
+
       <div className={`${styles.mainContent} ${sidebarCollapsed ? styles.expanded : ""}`}>
         <Header toggleSidebar={toggleSidebar} />
+
         <div className={styles.pageContent}>
-          <h1>Médicos</h1>
+          <header className={styles.header}>
+            <h2>Médicos</h2>
+            {/* Para criar novo, passamos um objecto vazio — o MedicoForm trata ausência de id como create */}
+            <button onClick={() => setEditing({})} className={styles.btnPrimary}>
+              Novo Médico
+            </button>
+          </header>
 
-          {!isAdding && !isViewing && !isEditing && (
-            <>
-              <button
-                style={{
-                  backgroundColor: "#2b7cff",
-                  color: "#fff",
-                  border: "none",
-                  padding: "10px 16px",
-                  borderRadius: "6px",
-                  marginBottom: "16px",
-                  cursor: "pointer",
-                }}
-                onClick={handleAdd}
-              >
-                + Novo Médico
-              </button>
-
-              <DataTable
-                data={medicos}
-                columns={[
-                  { key: "id", title: "ID" },
-                  { key: "nome", title: "Nome" },
-                  { key: "crm", title: "CRM" },
-                  { key: "especialidade", title: "Especialidade" },
-                  { key: "telefone", title: "Telefone" },
-                ]}
-                onView={handleView}
-                onDelete={handleDelete}
-                onEdit={handleEdit} // novo callback para editar
-              />
-            </>
+          {loading ? (
+            <p>Carregando médicos...</p>
+          ) : (
+            <div style={{ width: "100%" }}>
+              <div style={{ height: 500, width: "100%" }}>
+                <DataGrid
+                  rows={data}
+                  columns={columns}
+                  pageSize={10}
+                  rowsPerPageOptions={[5, 10, 20]}
+                  disableSelectionOnClick
+                  autoHeight
+                />
+              </div>
+            </div>
           )}
 
-          {isAdding && <MedicoForm onClose={handleFormClose} />}
-          {isEditing && (
+          {/* PASSAGEM CORRIGIDA: medicoToEdit (nome esperado pelo MedicoForm) */}
+          {editing && (
             <MedicoForm
-              onClose={handleFormClose}
-              medicoToEdit={selectedMedico} // passa o médico para editar
+              medicoToEdit={editing}
+              onClose={async () => {
+                setEditing(null);
+                await load();
+              }}
             />
           )}
-          {isViewing && (
-            <MedicoView medico={selectedMedico} onClose={() => setIsViewing(false)} />
+
+          {viewing && (
+            <MedicoView medico={viewing} onClose={() => setViewing(null)} />
           )}
         </div>
       </div>
