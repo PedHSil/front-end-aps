@@ -64,3 +64,11 @@
     outline: none;
   }
   
+  /* adicione no final de src/pages/Dashboard/components/content.module.css */
+
+.quickPanel {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 6px 16px rgba(16,24,40,0.04);
+}
