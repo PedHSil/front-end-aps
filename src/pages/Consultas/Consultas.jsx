@@ -1,186 +1,267 @@
+// src/pages/Consultas/Consultas.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
-import DataTable from "@/components/DataTable/DataTable";
 import ConsultaForm from "./ConsultaForm";
 import ConsultaDetail from "./ConsultaDetail";
 
-import { getConsultas, deleteConsulta, addConsulta, updateConsulta } from "@/services/mockConsultas";
-import { getPatients } from "@/services/mockPatients";
-import { getMedicos } from "@/services/mockMedicos";
+import {
+  listarConsultas,
+  buscarConsultaPorId,
+  agendarConsulta,
+  atualizarConsulta,
+  deletarConsulta,
+} from "@/services/consulta";
 
-import styles from "../Dashboard/dashboard.module.css";
+import { getPatients } from "@/services/pacientes";
+import { getMedicos } from "@/services/medicos";
+
+import styles from "./Consultas.module.css";
+
+// Material UI
+import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
+import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
 
 export default function Consultas() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [consultas, setConsultas] = useState([]);
   const [pacientes, setPacientes] = useState([]);
   const [medicos, setMedicos] = useState([]);
 
-  const [selectedConsulta, setSelectedConsulta] = useState(null);
-  const [isAdding, setIsAdding] = useState(false);
-  const [isViewing, setIsViewing] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(null); // objeto a editar ({} para novo)
+  const [viewing, setViewing] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  useEffect(() => {
+  const toggleSidebar = useCallback(() => setSidebarCollapsed(prev => !prev), []);
+  const setSidebarState = useCallback(state => setSidebarCollapsed(state), []);
+
+  // helper que aceita função async ou sync
+  async function callMaybeAsync(fn, ...args) {
+    if (!fn) return [];
     try {
-      setConsultas(Array.isArray(getConsultas()) ? getConsultas() : []);
-      setPacientes(Array.isArray(getPatients()) ? getPatients() : []);
-      setMedicos(Array.isArray(getMedicos()) ? getMedicos() : []);
+      const result = fn(...args);
+      const resolved = result && typeof result.then === "function" ? await result : result;
+      if (resolved && typeof resolved === "object" && Array.isArray(resolved.data)) return resolved.data;
+      return resolved ?? [];
     } catch (err) {
-      console.error("Erro ao carregar dados iniciais de Consultas:", err);
+      console.error("Erro callMaybeAsync:", err);
+      return [];
+    }
+  }
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [cList, pList, mList] = await Promise.all([
+        callMaybeAsync(listarConsultas),
+        callMaybeAsync(getPatients),
+        callMaybeAsync(getMedicos),
+      ]);
+
+      const consultasCompletas = (cList || []).map((c) => {
+        const raw = c.__raw || c;
+        const idPaciente = raw?.idPaciente ?? raw?.id_paciente ?? raw?.paciente_id;
+        const idMedico = raw?.idMedico ?? raw?.id_medico ?? raw?.medico_id;
+
+        const pacienteNome = (pList.find(p => (p.id_paciente ?? p.id) === idPaciente)?.nome) || c.paciente || "—";
+        const medicoNome = (mList.find(m => (m.id_medico ?? m.id) === idMedico)?.nome) || c.medico || "—";
+
+        return {
+          id: c.id_consulta ?? c.id ?? raw?.id,
+          paciente: pacienteNome,
+          medico: medicoNome,
+          data_consulta: c.data_consulta ?? c.data ?? raw?.data,
+          hora_inicio: c.hora_inicio ?? c.horaInicio ?? raw?.hora_inicio,
+          hora_fim: c.hora_fim ?? c.horaFim ?? raw?.hora_fim,
+          status: c.status ?? raw?.status ?? "AGENDADA",
+          __raw: raw,
+        };
+      });
+
+      setConsultas(consultasCompletas);
+      setPacientes(pList || []);
+      setMedicos(mList || []);
+    } catch (err) {
+      console.error("Erro ao carregar consultas:", err);
       setConsultas([]);
       setPacientes([]);
       setMedicos([]);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  const toggleSidebar = useCallback(() => {
-    setSidebarCollapsed(prev => !prev);
-  }, []);
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  const setSidebarState = useCallback((state) => {
-    setSidebarCollapsed(state);
-  }, []);
-
-  // handler robusto: aceita id numérico ou objeto linha
-  const handleDelete = useCallback((payload) => {
+  async function handleDelete(row) {
+    if (!window.confirm(`Deseja realmente excluir esta consulta?`)) return;
     try {
-      const id = (typeof payload === "number")
-        ? payload
-        : (payload && (payload.id_consulta || payload.id || payload.__raw?.id_consulta));
-      if (!id) return;
-      if (window.confirm("Deseja realmente excluir esta consulta?")) {
-        deleteConsulta(Number(id));
-        setConsultas(getConsultas());
+      // row pode ser DataGrid row (tem id) ou objeto original em __raw
+      const id = row.id ?? row.id_consulta ?? row.__raw?.id ?? row.__raw?.id_consulta;
+      await deletarConsulta(Number(id));
+      alert("Consulta excluída com sucesso!");
+      await load();
+    } catch (err) {
+      console.error("Erro ao excluir consulta:", err);
+      alert("Erro ao excluir consulta: " + (err.message || err));
+    }
+  }
+
+  // Usa buscarConsultaPorId quando recebido apenas id (evita perder campos do backend)
+  const handleView = useCallback(async (paramsRow) => {
+    try {
+      const raw = paramsRow?.__raw ?? paramsRow;
+      const id = raw?.id ?? raw?.id_consulta;
+      if (id && buscarConsultaPorId) {
+        // buscarConsultaPorId pode retornar Promise ou valor direto
+        const full = await buscarConsultaPorId(Number(id));
+        setViewing(full ?? raw);
+      } else {
+        setViewing(raw ?? null);
       }
     } catch (err) {
-      console.error("Erro ao deletar consulta:", err);
+      console.error("Erro ao buscar detalhe da consulta:", err);
+      alert("Não foi possível carregar os detalhes da consulta.");
     }
   }, []);
 
-  const handleAdd = () => setIsAdding(true);
-
-  const handleView = useCallback((row) => {
-    // row pode ser a linha já formatada ou o objeto original
-    const consulta = (row && row.__raw) ? row.__raw : row;
-    setSelectedConsulta(consulta || null);
-    setIsViewing(true);
-  }, []);
-
-  const handleEdit = useCallback((row) => {
-    const consulta = (row && row.__raw) ? row.__raw : row;
-    setSelectedConsulta(consulta || null);
-    setIsEditing(true);
-  }, []);
-
-  const handleFormClose = useCallback(() => {
-    setIsAdding(false);
-    setIsEditing(false);
-    setConsultas(getConsultas());
-  }, []);
-
-  const handleSave = useCallback((data) => {
+  const handleEdit = useCallback(async (paramsRow) => {
     try {
-      if (data.id_consulta) updateConsulta(data);
-      else addConsulta(data);
-      setConsultas(getConsultas());
-      setIsAdding(false);
-      setIsEditing(false);
+      const raw = paramsRow?.__raw ?? paramsRow;
+      const id = raw?.id ?? raw?.id_consulta;
+      if (id && buscarConsultaPorId) {
+        const full = await buscarConsultaPorId(Number(id));
+        setEditing(full ?? { ...raw });
+      } else {
+        setEditing(raw ?? {});
+      }
+    } catch (err) {
+      console.error("Erro ao preparar edição da consulta:", err);
+      alert("Não foi possível abrir o editor da consulta.");
+    }
+  }, []);
+
+  async function handleSave(data) {
+    try {
+      if (data.id || data.id_consulta) {
+        await atualizarConsulta({
+          id: Number(data.id || data.id_consulta),
+          idPaciente: Number(data.idPaciente ?? data.id_paciente),
+          idMedico: Number(data.idMedico ?? data.id_medico),
+          data: data.data_consulta ?? data.data,
+          horaInicio: data.hora_inicio ?? data.horaInicio,
+          horaFim: data.hora_fim ?? data.horaFim,
+          status: data.status,
+        });
+      } else {
+        await agendarConsulta({
+          idPaciente: Number(data.idPaciente ?? data.id_paciente),
+          idMedico: Number(data.idMedico ?? data.id_medico),
+          data: data.data_consulta ?? data.data,
+          horaInicio: data.hora_inicio ?? data.horaInicio,
+          horaFim: data.hora_fim ?? data.horaFim,
+        });
+      }
+      alert("Consulta salva com sucesso!");
+      setEditing(null);
+      await load();
     } catch (err) {
       console.error("Erro ao salvar consulta:", err);
+      alert("Erro ao salvar consulta: " + (err.message || err));
     }
-  }, []);
-
-  // prepara dados para a tabela (evita uso direto de lookup no render do DataTable)
-  const dataForTable = consultas.map(c => ({
-    id_consulta: c.id_consulta,
-    paciente: pacientes.find(p => p.id_paciente === c.id_paciente)?.nome || "—",
-    medico: medicos.find(m => m.id_medico === c.id_medico)?.nome || "—",
-    data_consulta: c.data_consulta,
-    hora_inicio: c.hora_inicio,
-    hora_fim: c.hora_fim,
-    status: c.status,
-    __raw: c, // deixa o objeto original disponível
-  }));
+  }
 
   const columns = [
-    { key: "id_consulta", title: "ID" },
-    { key: "paciente", title: "Paciente" },
-    { key: "medico", title: "Médico" },
-    { key: "data_consulta", title: "Data" },
-    { key: "hora_inicio", title: "Início" },
-    { key: "hora_fim", title: "Fim" },
-    { key: "status", title: "Status" },
+    { field: "id", headerName: "ID", width: 90 },
+    { field: "paciente", headerName: "Paciente", flex: 1 },
+    { field: "medico", headerName: "Médico", flex: 1 },
+    { field: "data_consulta", headerName: "Data", width: 140 },
+    { field: "hora_inicio", headerName: "Início", width: 120 },
+    { field: "hora_fim", headerName: "Fim", width: 120 },
+    { field: "status", headerName: "Status", width: 140 },
+    {
+      field: "actions",
+      type: "actions",
+      headerName: "Ações",
+      width: 120,
+      getActions: (params) => [
+        <GridActionsCellItem
+          icon={<VisibilityIcon />}
+          label="Visualizar"
+          onClick={() => handleView(params.row)}
+        />,
+        <GridActionsCellItem
+          icon={<EditIcon />}
+          label="Editar"
+          onClick={() => handleEdit(params.row)}
+        />,
+        <GridActionsCellItem
+          icon={<DeleteIcon />}
+          label="Excluir"
+          onClick={() => handleDelete(params.row)}
+          showInMenu
+        />,
+      ],
+    },
   ];
 
   return (
     <div className={styles.appContainer}>
       <Sidebar isCollapsed={sidebarCollapsed} setIsCollapsed={setSidebarState} />
+
       <div className={`${styles.mainContent} ${sidebarCollapsed ? styles.expanded : ""}`}>
         <Header toggleSidebar={toggleSidebar} />
+
         <div className={styles.pageContent}>
-          <h1>Consultas</h1>
+          <header className={styles.header}>
+            <h2>Consultas</h2>
+            <button onClick={() => setEditing({})} className={styles.btnPrimary}>
+              <AddIcon style={{ marginRight: 6 }} /> Nova Consulta
+            </button>
+          </header>
 
-          {!isAdding && !isViewing && !isEditing && (
-            <>
-              <button
-                style={{
-                  backgroundColor: "#2b7cff",
-                  color: "#fff",
-                  border: "none",
-                  padding: "10px 16px",
-                  borderRadius: "6px",
-                  marginBottom: "16px",
-                  cursor: "pointer",
-                }}
-                onClick={handleAdd}
-              >
-                + Nova Consulta
-              </button>
-
-              <DataTable
-                data={dataForTable}
-                columns={columns}
-                onView={(row) => handleView(row)}
-                onEdit={(row) => handleEdit(row)}
-                onDelete={(row) => handleDelete(row)}
-              />
-            </>
-          )}
-
-          {isAdding && (
-            <div className={styles.formContainer}>
-              <ConsultaForm
-                pacientes={pacientes}
-                medicos={medicos}
-                onSave={handleSave}
-                onCancel={handleFormClose}
-              />
+          {loading ? (
+            <p>Carregando consultas...</p>
+          ) : (
+            <div style={{ width: "100%" }}>
+              <div style={{ height: 500, width: "100%" }}>
+                <DataGrid
+                  rows={consultas}
+                  columns={columns}
+                  pageSize={10}
+                  rowsPerPageOptions={[5, 10, 20]}
+                  disableSelectionOnClick
+                  autoHeight
+                />
+              </div>
             </div>
           )}
 
-          {isEditing && (
-            <div className={styles.formContainer}>
-              <ConsultaForm
-                pacientes={pacientes}
-                medicos={medicos}
-                initialData={selectedConsulta}
-                onSave={handleSave}
-                onCancel={handleFormClose}
-              />
-            </div>
+          {editing && (
+            <ConsultaForm
+              consultaToEdit={editing}
+              pacientes={pacientes}
+              medicos={medicos}
+              onClose={async () => {
+                setEditing(null);
+                await load();
+              }}
+              onSave={handleSave}
+            />
           )}
 
-          {isViewing && (
-            <div className={styles.viewContainer}>
-              <ConsultaDetail
-                consulta={selectedConsulta}
-                pacientes={pacientes}
-                medicos={medicos}
-                onClose={() => setIsViewing(false)}
-              />
-            </div>
+          {viewing && (
+            <ConsultaDetail
+              consulta={viewing}
+              pacientes={pacientes}
+              medicos={medicos}
+              onClose={() => setViewing(null)}
+            />
           )}
         </div>
       </div>

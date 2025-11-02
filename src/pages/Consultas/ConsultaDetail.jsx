@@ -1,20 +1,58 @@
 import React from "react";
+import styles from "./Consultas.module.css";
 
-export default function ConsultaDetail({ consulta, onClose, pacientes = [], medicos = [] }) {
+export default function ConsultaDetail({ consulta, onClose }) {
   if (!consulta) return null;
-  const paciente = pacientes.find(p => p.id_paciente === consulta.id_paciente);
-  const medico = medicos.find(m => m.id_medico === consulta.id_medico);
 
   return (
-    <div style={{ border: "1px solid #ddd", padding: 12, borderRadius: 6 }}>
-      <h3>Detalhes da Consulta #{consulta.id_consulta}</h3>
-      <p><strong>Paciente:</strong> {paciente ? paciente.nome : "—"}</p>
-      <p><strong>Médico:</strong> {medico ? medico.nome : "—"}</p>
-      <p><strong>Data:</strong> {consulta.data_consulta}</p>
-      <p><strong>Horário:</strong> {consulta.hora_inicio} — {consulta.hora_fim}</p>
-      <p><strong>Status:</strong> {consulta.status}</p>
-      <div style={{ marginTop: 8 }}>
-        <button onClick={onClose}>Fechar</button>
+    <div className={styles.overlay}>
+      <div className={styles.modal}>
+        <h2>Detalhes da Consulta</h2>
+
+        <div className={styles.detailGroup}>
+          <div className={styles.detailItemFull}>
+            <span className={styles.label}>Paciente:</span>
+            <span className={styles.value}>{consulta.paciente || consulta.pacienteId}</span>
+          </div>
+
+          <div className={styles.detailItemFull}>
+            <span className={styles.label}>Médico:</span>
+            <span className={styles.value}>{consulta.medico || consulta.medicoId}</span>
+          </div>
+
+          <div className={styles.detailItemFull}>
+            <span className={styles.label}>Data:</span>
+            <span className={styles.value}>
+              {new Date(consulta.data_consulta).toLocaleString("pt-BR")}
+            </span>
+          </div>
+
+          <div className={styles.detailItemFull}>
+            <span className={styles.label}>Observações:</span>
+            <span className={styles.value}>{consulta.observacoes || "Sem observações"}</span>
+          </div>
+
+          <div className={styles.detailItemFull}>
+            <span className={styles.label}>Status:</span>
+            <span
+              className={`${styles.status} ${
+                consulta.status === "realizada"
+                  ? styles.realizada
+                  : consulta.status === "cancelada"
+                  ? styles.cancelada
+                  : styles.agendada
+              }`}
+            >
+              {consulta.status.toUpperCase()}
+            </span>
+          </div>
+        </div>
+
+        <div className={styles.actions}>
+          <button onClick={onClose} className={styles.cancel}>
+            Fechar
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,74 +1,141 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { agendarConsulta, atualizarConsulta } from "@/services/consulta";
+import styles from "./Consultas.module.css";
 
-export default function ConsultaForm({ pacientes = [], medicos = [], initialData = null, onSave, onCancel }) {
-  const [form, setForm] = useState(() => initialData ? { ...initialData } : {
-    id_paciente: pacientes.length ? pacientes[0].id_paciente : null,
-    id_medico: medicos.length ? medicos[0].id_medico : null,
+
+export default function ConsultaForm({ onClose, consultaToEdit }) {
+  const [formData, setFormData] = useState({
+    pacienteId: "",
+    medicoId: "",
     data_consulta: "",
-    hora_inicio: "",
-    hora_fim: "",
-    status: "Agendada"
+    observacoes: "",
+    status: "agendada",
   });
 
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-  }
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
-  function submit(e) {
-    e.preventDefault();
-    // validações mínimas
-    if (!form.id_paciente || !form.id_medico || !form.data_consulta) {
-      alert("Preencha paciente, médico e data.");
-      return;
+  useEffect(() => {
+    if (consultaToEdit) {
+      setFormData({
+        pacienteId: consultaToEdit.pacienteId ?? "",
+        medicoId: consultaToEdit.medicoId ?? "",
+        data_consulta: consultaToEdit.data_consulta ?? "",
+        observacoes: consultaToEdit.observacoes ?? "",
+        status: consultaToEdit.status ?? "agendada",
+      });
     }
-    onSave(form);
-  }
+  }, [consultaToEdit]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      if (consultaToEdit && consultaToEdit.id) {
+        await atualizarConsulta(consultaToEdit.id, formData);
+      } else {
+        await agendarConsulta(formData);
+      }
+      onClose();
+    } catch (err) {
+      console.error("Erro ao salvar consulta:", err);
+      setError(err?.message || "Erro ao salvar consulta");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
-    <form onSubmit={submit} style={{ border: "1px solid #ddd", padding: 12, borderRadius: 6 }}>
-      <div style={{ marginBottom: 8 }}>
-        <label>Paciente<br />
-          <select name="id_paciente" value={form.id_paciente || ""} onChange={handleChange}>
-            {pacientes.map(p => <option key={p.id_paciente} value={p.id_paciente}>{p.nome}</option>)}
+    <div className={styles.overlay}>
+      <div className={styles.modal}>
+        <h2>{consultaToEdit ? "Editar Consulta" : "Nova Consulta"}</h2>
+
+        {error && <p className={styles.error}>{error}</p>}
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <label>ID do Paciente</label>
+          <input
+            name="pacienteId"
+            value={formData.pacienteId}
+            onChange={handleChange}
+            required
+            disabled={submitting}
+            placeholder="Ex: 1"
+          />
+
+          <label>ID do Médico</label>
+          <input
+            name="medicoId"
+            value={formData.medicoId}
+            onChange={handleChange}
+            required
+            disabled={submitting}
+            placeholder="Ex: 2"
+          />
+
+          <label>Data da Consulta</label>
+          <input
+            type="datetime-local"
+            name="data_consulta"
+            value={formData.data_consulta}
+            onChange={handleChange}
+            required
+            disabled={submitting}
+          />
+
+          <label>Observações</label>
+          <textarea
+            name="observacoes"
+            value={formData.observacoes}
+            onChange={handleChange}
+            disabled={submitting}
+            placeholder="Digite observações..."
+          />
+
+          <label>Status</label>
+          <select
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            disabled={submitting}
+          >
+            <option value="agendada">Agendada</option>
+            <option value="realizada">Realizada</option>
+            <option value="cancelada">Cancelada</option>
           </select>
-        </label>
-      </div>
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Médico<br />
-          <select name="id_medico" value={form.id_medico || ""} onChange={handleChange}>
-            {medicos.map(m => <option key={m.id_medico} value={m.id_medico}>{m.nome}</option>)}
-          </select>
-        </label>
-      </div>
+          <div className={styles.actions}>
+            <button type="submit" className={styles.save} disabled={submitting}>
+              {submitting
+                ? consultaToEdit
+                  ? "Atualizando..."
+                  : "Salvando..."
+                : consultaToEdit
+                ? "Atualizar"
+                : "Salvar"}
+            </button>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-        <label>Data<br />
-          <input type="date" name="data_consulta" value={form.data_consulta} onChange={handleChange} />
-        </label>
-        <label>Início<br />
-          <input type="time" name="hora_inicio" value={form.hora_inicio} onChange={handleChange} />
-        </label>
-        <label>Fim<br />
-          <input type="time" name="hora_fim" value={form.hora_fim} onChange={handleChange} />
-        </label>
+            <button
+              type="button"
+              className={styles.cancel}
+              onClick={() => !submitting && onClose()}
+              disabled={submitting}
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
       </div>
-
-      <div style={{ marginBottom: 8 }}>
-        <label>Status<br />
-          <select name="status" value={form.status} onChange={handleChange}>
-            <option>Agendada</option>
-            <option>Concluída</option>
-            <option>Cancelada</option>
-          </select>
-        </label>
-      </div>
-
-      <div style={{ display: "flex", gap: 8 }}>
-        <button type="submit">Salvar</button>
-        <button type="button" onClick={onCancel}>Cancelar</button>
-      </div>
-    </form>
+    </div>
   );
 }
