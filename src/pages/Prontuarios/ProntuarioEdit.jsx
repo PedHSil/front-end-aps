@@ -1,45 +1,114 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import styles from "./Prontuarios.module.css";
 
-export default function ProntuarioEdit({ initialData, onSave, onCancel }) {
-  const [form, setForm] = useState({ ...initialData });
+export default function ProntuarioEdit({ initialData, onSave, onCancel, readOnly }) {
+  const [form, setForm] = useState({
+    anamnese: "",
+    diagnostico: "",
+    prescricao: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
-  function handleChange(e) {
+  useEffect(() => {
+    if (initialData) {
+      setForm({
+        anamnese: initialData.anamnese ?? "",
+        diagnostico: initialData.diagnostico ?? "",
+        prescricao: initialData.prescricao ?? "",
+      });
+    }
+  }, [initialData]);
+
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
-  }
+  };
 
-  function submit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.diagnostico) {
-      if (!window.confirm("Salvar prontuário sem diagnóstico?")) return;
+    if (!form.diagnostico && !window.confirm("Salvar prontuário sem diagnóstico?")) return;
+
+    setError(null);
+    setSubmitting(true);
+    try {
+      await onSave(form);
+    } catch (err) {
+      setError(err?.message || "Erro ao salvar prontuário");
+    } finally {
+      setSubmitting(false);
     }
-    onSave(form);
-  }
+  };
 
   return (
-    <form onSubmit={submit} style={{ border: "1px solid #ddd", padding: 12, borderRadius: 6 }}>
-      <div style={{ marginBottom: 8 }}>
-        <label>Anamnese<br />
-          <textarea name="anamnese" value={form.anamnese} onChange={handleChange} rows={4} />
-        </label>
-      </div>
+    <div className={styles.overlay}>
+      <div className={styles.modal}>
+        <h2>{readOnly ? "Visualizar Prontuário" : "Editar Prontuário"}</h2>
+        {error && <p className={styles.error}>{error}</p>}
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Diagnóstico<br />
-          <textarea name="diagnostico" value={form.diagnostico} onChange={handleChange} rows={3} />
-        </label>
-      </div>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <label>
+            Anamnese
+            <textarea
+              name="anamnese"
+              value={form.anamnese}
+              onChange={handleChange}
+              rows={4}
+              disabled={readOnly || submitting}
+            />
+          </label>
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Prescrição<br />
-          <textarea name="prescricao" value={form.prescricao} onChange={handleChange} rows={3} />
-        </label>
-      </div>
+          <label>
+            Diagnóstico
+            <textarea
+              name="diagnostico"
+              value={form.diagnostico}
+              onChange={handleChange}
+              rows={3}
+              disabled={readOnly || submitting}
+            />
+          </label>
 
-      <div style={{ display: "flex", gap: 8 }}>
-        <button type="submit">Salvar</button>
-        <button type="button" onClick={onCancel}>Cancelar</button>
+          <label>
+            Prescrição
+            <textarea
+              name="prescricao"
+              value={form.prescricao}
+              onChange={handleChange}
+              rows={3}
+              disabled={readOnly || submitting}
+            />
+          </label>
+
+          {!readOnly && (
+            <div className={styles.actions}>
+              <button type="submit" className={styles.save} disabled={submitting}>
+                {submitting ? "Salvando..." : "Salvar"}
+              </button>
+              <button
+                type="button"
+                className={styles.cancel}
+                onClick={() => !submitting && onCancel()}
+                disabled={submitting}
+              >
+                Cancelar
+              </button>
+            </div>
+          )}
+
+          {readOnly && (
+            <div className={styles.actions}>
+              <button
+                type="button"
+                className={styles.cancel}
+                onClick={onCancel}
+              >
+                Fechar
+              </button>
+            </div>
+          )}
+        </form>
       </div>
-    </form>
+    </div>
   );
 }
