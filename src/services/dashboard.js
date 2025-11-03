@@ -94,6 +94,46 @@ export async function listarConsultasPorData(dataYYYYMMDD) {
   return handleResponse(res);
 }
 
+/**
+ * Relatório: próximas consultas do médico
+ * GET /medicos/{id}/proximas-consultas
+ * Retorno esperado: { status, mensagem, data: [ ...consultas ] }
+ */
+export async function relatorioProximasConsultas(idMedico) {
+  const res = await fetch(`${BASE_URL}/medicos/${idMedico}/proximas-consultas`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  });
+  return handleResponse(res);
+}
+
+/**
+ * Buscar horários disponíveis do médico em uma data específica
+ * GET /medicos/{id}/horarios-disponiveis?data=YYYY-MM-DD
+ * Retorno esperado: { status, mensagem, data: [ { horaInicio, horaFim }, ... ] }
+ */
+export async function buscarHorariosDisponiveis(idMedico, dataYYYYMMDD) {
+  const dateParam = encodeURIComponent(dataYYYYMMDD);
+  const res = await fetch(`${BASE_URL}/medicos/${idMedico}/horarios-disponiveis?data=${dateParam}`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  });
+  return handleResponse(res);
+}
+
+/**
+ * Contagem de pacientes por especialidade (relatório)
+ * GET /pacientes/relatorio/especialidades
+ * Retorno esperado: { status, mensagem, data: [ { totalPacientes, especialidade }, ... ] }
+ */
+export async function contarPacientesPorEspecialidade() {
+  const res = await fetch(`${BASE_URL}/pacientes/relatorio/especialidades`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+  });
+  return handleResponse(res);
+}
+
 // Export default com todas as funções para facilitar imports
 export default {
   listarHistoricoPaciente,
@@ -102,4 +142,7 @@ export default {
   listarConsultasPorPaciente,
   listarConsultasPorMedico,
   listarConsultasPorData,
+  relatorioProximasConsultas,
+  buscarHorariosDisponiveis,
+  contarPacientesPorEspecialidade,
 };

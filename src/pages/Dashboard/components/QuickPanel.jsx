@@ -6,7 +6,6 @@ import {
   CardContent,
   Typography,
   Button,
-  TextField,
   Select,
   MenuItem,
   Alert,
@@ -15,8 +14,9 @@ import {
   ListItem,
   ListItemText,
   Divider,
+  TextField
 } from "@mui/material";
-import { Cancel, Edit, Refresh } from "@mui/icons-material";
+import { Refresh } from "@mui/icons-material";
 import dashboardService from "../../../services/dashboard";
 
 export default function QuickPanel({ patientId = 1, medicoId = 1 }) {
@@ -26,9 +26,17 @@ export default function QuickPanel({ patientId = 1, medicoId = 1 }) {
   const [consultasMedico, setConsultasMedico] = useState([]);
   const [historico, setHistorico] = useState([]);
   const [error, setError] = useState(null);
-
-  const [consultaStatuses, setConsultaStatuses] = useState({}); // Estado dos status individuais
+  const [consultaStatuses, setConsultaStatuses] = useState({});
   const [actionResult, setActionResult] = useState(null);
+
+  // Relatórios
+  const [proximasConsultas, setProximasConsultas] = useState([]);
+  const [proximasLoading, setProximasLoading] = useState(false);
+  const [dataHorarios, setDataHorarios] = useState(new Date().toISOString().split("T")[0]);
+  const [horariosDisponiveis, setHorariosDisponiveis] = useState([]);
+  const [horariosLoading, setHorariosLoading] = useState(false);
+  const [contagemEspecialidades, setContagemEspecialidades] = useState([]);
+  const [contagemLoading, setContagemLoading] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -46,41 +54,27 @@ export default function QuickPanel({ patientId = 1, medicoId = 1 }) {
           consultasMedicoResp,
           historicoResp,
         ] = await Promise.all([
-          dashboardService.listarConsultasPorData(todayDate).catch((e) => ({ error: e })),
-          dashboardService.listarConsultasPorPaciente(patientId).catch((e) => ({ error: e })),
-          dashboardService.listarConsultasPorMedico(medicoId).catch((e) => ({ error: e })),
-          dashboardService.listarHistoricoPaciente(patientId).catch((e) => ({ error: e })),
+          dashboardService.listarConsultasPorData(todayDate),
+          dashboardService.listarConsultasPorPaciente(patientId),
+          dashboardService.listarConsultasPorMedico(medicoId),
+          dashboardService.listarHistoricoPaciente(patientId),
         ]);
 
         if (!mounted) return;
-
-        if (
-          consultasHojeResp?.error ||
-          consultasPacienteResp?.error ||
-          consultasMedicoResp?.error ||
-          historicoResp?.error
-        ) {
-          setError("Alguma(s) chamada(s) falharam — ver console para detalhes.");
-          console.error("Erros:", {
-            consultasHojeResp,
-            consultasPacienteResp,
-            consultasMedicoResp,
-            historicoResp,
-          });
-        }
 
         setToday(consultasHojeResp?.data || []);
         setConsultasPaciente(consultasPacienteResp?.data || []);
         setConsultasMedico(consultasMedicoResp?.data || []);
         setHistorico(historicoResp?.data || []);
 
-        // Inicializa os status
         const initialStatuses = {};
-        [...(consultasHojeResp?.data || []), ...(consultasPacienteResp?.data || []), ...(consultasMedicoResp?.data || [])].forEach(
-          (c) => {
-            initialStatuses[c.id] = c.status || "AGENDADA";
-          }
-        );
+        [
+          ...(consultasHojeResp?.data || []),
+          ...(consultasPacienteResp?.data || []),
+          ...(consultasMedicoResp?.data || []),
+        ].forEach((c) => {
+          if (c && c.id != null) initialStatuses[c.id] = c.status || "AGENDADA";
+        });
         setConsultaStatuses(initialStatuses);
       } catch (err) {
         if (mounted) setError(err.message || String(err));
@@ -90,10 +84,50 @@ export default function QuickPanel({ patientId = 1, medicoId = 1 }) {
     }
 
     loadAll();
+    carregarProximasConsultas();
+    carregarContagemEspecialidades();
+    carregarHorariosDisponiveis(dataHorarios);
+
     return () => (mounted = false);
   }, [patientId, medicoId]);
 
-  // Atualiza status de uma consulta específica
+  // --- Relatórios ---
+  async function carregarProximasConsultas() {
+    setProximasLoading(true);
+    try {
+      const resp = await dashboardService.relatorioProximasConsultas(medicoId);
+      setProximasConsultas(resp?.data || []);
+    } catch (err) {
+      console.error("Erro prox consultas:", err);
+    } finally {
+      setProximasLoading(false);
+    }
+  }
+
+  async function carregarHorariosDisponiveis(dataYYYYMMDD = dataHorarios) {
+    setHorariosLoading(true);
+    try {
+      const resp = await dashboardService.buscarHorariosDisponiveis(medicoId, dataYYYYMMDD);
+      setHorariosDisponiveis(resp?.data || []);
+    } catch (err) {
+      console.error("Erro horários:", err);
+    } finally {
+      setHorariosLoading(false);
+    }
+  }
+
+  async function carregarContagemEspecialidades() {
+    setContagemLoading(true);
+    try {
+      const resp = await dashboardService.contarPacientesPorEspecialidade();
+      setContagemEspecialidades(resp?.data || []);
+    } catch (err) {
+      console.error("Erro contagem especialidades:", err);
+    } finally {
+      setContagemLoading(false);
+    }
+  }
+
   async function handleItemUpdate(id) {
     const statusValue = consultaStatuses[id];
     if (!statusValue) return;
@@ -101,14 +135,12 @@ export default function QuickPanel({ patientId = 1, medicoId = 1 }) {
       const resp = await dashboardService.atualizarConsulta(id, { status: statusValue });
       setActionResult({ success: true, mensagem: resp?.mensagem || "Status atualizado!" });
     } catch (err) {
-      console.error("Erro atualizar:", err);
-      setActionResult({ success: false, mensagem: err.message });
+      setActionResult({ success: false, mensagem: err.message || String(err) });
     }
   }
 
-  // Renderiza consultas com Select para status
   function renderConsultas(lista, titulo) {
-    if (!lista.length) return <Typography>Nenhuma consulta.</Typography>;
+    if (!lista.length) return <Typography>Sem {titulo.toLowerCase()}.</Typography>;
 
     return (
       <Card sx={{ mb: 2 }}>
@@ -117,19 +149,10 @@ export default function QuickPanel({ patientId = 1, medicoId = 1 }) {
           <List dense>
             {lista.map((c) => {
               const pacienteNome =
-                c.paciente?.nome ||
-                c.paciente?.nomeCompleto ||
-                c.pacienteNome ||
-                c.nomePaciente ||
-                "Paciente não informado";
+                c.paciente?.nome || c.pacienteNome || "Paciente não informado";
               const medicoNome =
-                c.medico?.nome ||
-                c.medico?.nomeCompleto ||
-                c.medicoNome ||
-                c.nomeMedico ||
-                "Médico não informado";
-
-              const statusValue = consultaStatuses[c.id] || "AGENDADA";
+                c.medico?.nome || c.nomeMedico || "Médico não informado";
+              const statusValue = consultaStatuses[c.id] || c.status || "AGENDADA";
 
               return (
                 <React.Fragment key={c.id}>
@@ -137,25 +160,22 @@ export default function QuickPanel({ patientId = 1, medicoId = 1 }) {
                     <ListItemText
                       primary={`#${c.id} — ${pacienteNome}`}
                       secondary={
-                        <>
+                        <Box>
                           <Typography variant="body2" color="text.secondary">
                             Data: {c.dataConsulta || "-"} | Início: {c.horaInicio || "-"} | Fim: {c.horaFim || "-"}
                           </Typography>
-                          <Typography variant="body2">
-                            Médico: {medicoNome}
-                          </Typography>
-                          <Typography variant="body2">
-                            Status atual: <b>{statusValue}</b>
-                          </Typography>
-                        </>
+                          <Typography variant="body2">Médico: {medicoNome}</Typography>
+                          <Typography variant="body2">Status atual: <b>{statusValue}</b></Typography>
+                        </Box>
                       }
+                      secondaryTypographyProps={{ component: "div" }} // ✅ Evita <p> aninhado
                     />
                     <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                       <Select
                         size="small"
                         value={statusValue}
                         onChange={(e) =>
-                          setConsultaStatuses(prev => ({ ...prev, [c.id]: e.target.value }))
+                          setConsultaStatuses((prev) => ({ ...prev, [c.id]: e.target.value }))
                         }
                       >
                         <MenuItem value="AGENDADA">Agendada</MenuItem>
@@ -185,28 +205,26 @@ export default function QuickPanel({ patientId = 1, medicoId = 1 }) {
         <CardContent>
           <Typography variant="h6" sx={{ mb: 1 }}>Histórico do Paciente</Typography>
           <List dense>
-            {lista.map((item, i) => {
-              const c = item.consulta || item;
-              return (
-                <React.Fragment key={i}>
-                  <ListItem alignItems="flex-start">
-                    <ListItemText
-                      primary={`Data: ${c.dataConsulta || "—"} (${c.statusConsulta || "—"})`}
-                      secondary={
-                        <>
-                          <Typography variant="body2">Hora: {c.horaInicio ? `${c.horaInicio} - ${c.horaFim}` : "—"}</Typography>
-                          <Typography variant="body2">Médico: {c.nomeMedico || "—"}</Typography>
-                          <Typography variant="body2">Anamnese: {c.anamnese || "—"}</Typography>
-                          <Typography variant="body2">Diagnóstico: {c.diagnostico || "—"}</Typography>
-                          <Typography variant="body2">Prescrição: {c.prescricao || "—"}</Typography>
-                        </>
-                      }
-                    />
-                  </ListItem>
-                  <Divider component="li" />
-                </React.Fragment>
-              );
-            })}
+            {lista.map((c, i) => (
+              <React.Fragment key={i}>
+                <ListItem>
+                  <ListItemText
+                    primary={`Data: ${c.dataConsulta || "—"} (${c.statusConsulta || c.status || "—"})`}
+                    secondary={
+                      <Box>
+                        <Typography variant="body2">Hora: {c.horaInicio ? `${c.horaInicio} - ${c.horaFim}` : "—"}</Typography>
+                        <Typography variant="body2">Médico: {c.nomeMedico || "—"}</Typography>
+                        <Typography variant="body2">Anamnese: {c.anamnese || "—"}</Typography>
+                        <Typography variant="body2">Diagnóstico: {c.diagnostico || "—"}</Typography>
+                        <Typography variant="body2">Prescrição: {c.prescricao || "—"}</Typography>
+                      </Box>
+                    }
+                    secondaryTypographyProps={{ component: "div" }} // ✅ evita <p> dentro de <p>
+                  />
+                </ListItem>
+                <Divider component="li" />
+              </React.Fragment>
+            ))}
           </List>
         </CardContent>
       </Card>
@@ -218,21 +236,18 @@ export default function QuickPanel({ patientId = 1, medicoId = 1 }) {
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Box>
           <Typography variant="h5" fontWeight={600}>Painel Rápido</Typography>
-          <Typography variant="body2" color="text.secondary">Resumo das consultas e histórico do paciente</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Resumo das consultas e histórico do paciente
+          </Typography>
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<Refresh />}
-          onClick={() => window.location.reload()}
-          disabled={loading}
-        >
+        <Button variant="outlined" startIcon={<Refresh />} onClick={() => window.location.reload()} disabled={loading}>
           Atualizar
         </Button>
       </Box>
 
       <Divider sx={{ my: 2 }} />
 
-      {error && <Alert severity="error">{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {loading ? (
         <Box sx={{ textAlign: "center", py: 5 }}>
@@ -248,7 +263,7 @@ export default function QuickPanel({ patientId = 1, medicoId = 1 }) {
               { label: `Médico #${medicoId}`, value: consultasMedico.length },
               { label: "Histórico", value: historico.length },
             ].map((stat, i) => (
-              <Grid item xs={6} sm={3} key={i}>
+              <Grid key={i} item size={{ xs: 12, sm: 6, md: 3 }}> {/* ✅ Grid v2 */}
                 <Card>
                   <CardContent sx={{ textAlign: "center" }}>
                     <Typography variant="subtitle2" color="text.secondary">{stat.label}</Typography>
@@ -269,6 +284,78 @@ export default function QuickPanel({ patientId = 1, medicoId = 1 }) {
           {renderConsultas(consultasPaciente, `Consultas do Paciente #${patientId}`)}
           {renderConsultas(consultasMedico, `Consultas do Médico #${medicoId}`)}
           {renderHistorico(historico)}
+
+          {/* Relatórios */}
+          <Card sx={{ mt: 3 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 1 }}>Próximas Consultas do Médico</Typography>
+              {proximasLoading ? (
+                <CircularProgress size={24} />
+              ) : proximasConsultas.length ? (
+                <List dense>
+                  {proximasConsultas.map((c) => (
+                    <ListItem key={c.id}>
+                      <ListItemText
+                        primary={`${c.dataConsulta} ${c.horaInicio}-${c.horaFim} — ${c.nomePaciente}`}
+                        secondary={<Typography component="div">Status: {c.status}</Typography>}
+                        secondaryTypographyProps={{ component: "div" }} // ✅
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              ) : (
+                <Typography>Sem próximas consultas.</Typography>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card sx={{ mt: 3 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 1 }}>Horários Disponíveis</Typography>
+              <TextField
+                type="date"
+                size="small"
+                value={dataHorarios}
+                onChange={(e) => {
+                  setDataHorarios(e.target.value);
+                  carregarHorariosDisponiveis(e.target.value);
+                }}
+                sx={{ mb: 2 }}
+              />
+              {horariosLoading ? (
+                <CircularProgress size={24} />
+              ) : horariosDisponiveis.length ? (
+                <List dense>
+                  {horariosDisponiveis.map((h, i) => (
+                    <ListItem key={i}>
+                      <ListItemText primary={`${h.horaInicio} - ${h.horaFim}`} />
+                    </ListItem>
+                  ))}
+                </List>
+              ) : (
+                <Typography>Nenhum horário disponível.</Typography>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card sx={{ mt: 3 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 1 }}>Pacientes por Especialidade</Typography>
+              {contagemLoading ? (
+                <CircularProgress size={24} />
+              ) : contagemEspecialidades.length ? (
+                <List dense>
+                  {contagemEspecialidades.map((e, i) => (
+                    <ListItem key={i}>
+                      <ListItemText primary={`${e.especialidade}: ${e.totalPacientes}`} />
+                    </ListItem>
+                  ))}
+                </List>
+              ) : (
+                <Typography>Nenhum dado disponível.</Typography>
+              )}
+            </CardContent>
+          </Card>
         </>
       )}
     </Box>
