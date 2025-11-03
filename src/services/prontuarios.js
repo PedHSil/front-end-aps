@@ -10,12 +10,40 @@ export async function listarProntuarios() {
     const response = await fetch(BASE_URL);
     const result = await response.json();
     if (!response.ok) throw new Error(result.mensagem || "Erro ao listar prontuários");
-    return result.data;
+
+    // NORMALIZA A RESPOSTA para o formato que o front normalmente espera
+    // ajuste os nomes dos campos abaixo ao formato do seu DataTable/Componente
+    function parseDateLocal(dateStr) {
+  if (!dateStr) return null;
+  if (dateStr.includes("T")) {
+    return new Date(dateStr); // já contém hora -> mantém
+  }
+  const parts = dateStr.split("-");
+  if (parts.length < 3) return null;
+  const [y, m, d] = parts.map(Number);
+  return new Date(y, m - 1, d); // cria no fuso local, evita -1 dia
+}
+
+const normalized = (result.data || []).map(p => ({
+  id: p.idProntuario,
+  idConsulta: p.idConsulta,
+  paciente: p.nomePaciente,
+  medico: p.nomeMedico,
+  dataRegistro: parseDateLocal(p.dataRegistro), // Date | null
+  dataConsulta: parseDateLocal(p.dataRegistro),
+  diagnostico: p.diagnostico,
+  prescricao: p.prescricao,
+  anamnese: p.anamnese,
+}));
+
+
+    return normalized;
   } catch (error) {
     console.error("listarProntuarios:", error);
     throw error;
   }
 }
+
 
 /**
  * Busca um prontuário pelo ID da consulta
