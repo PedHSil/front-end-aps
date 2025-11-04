@@ -107,3 +107,7 @@ export async function getPacienteIdade(id) {
   const idade = json?.data ?? null;
   return idade;
 }
+
+export default {
+  getPatientById,
+};
